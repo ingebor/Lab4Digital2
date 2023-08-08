@@ -8,6 +8,7 @@
 //****************************************************************
 #include <Arduino.h>
 #include "driver/ledc.h"
+#include <ESP32Servo.h>
 //****************************************************************
 // Definición de etiquetas
 //****************************************************************
@@ -30,6 +31,9 @@
 #define boton3 18
 #define boton4 19
 
+#define pinServo 13
+
+
 //****************************************************************
 // Prototipos de funciones
 //****************************************************************
@@ -43,6 +47,10 @@ int color = 0; // 0 para rojo 1 para verde y 2 para azul
 int dcR = 0;
 int dcG = 0;
 int dcB = 0;
+
+Servo myservo;
+int pos = 0;
+int aumento = 10;
 
 //****************************************************************
 // ISR: Interrupciones
@@ -61,6 +69,8 @@ void setup()
   pinMode(boton2, INPUT_PULLDOWN);
   pinMode(boton3, INPUT_PULLDOWN);
   pinMode(boton4, INPUT_PULLDOWN);
+  myservo.attach(pinServo);
+  myservo.write(pos);
 }
 //****************************************************************
 // Loop Principal
@@ -71,6 +81,27 @@ void loop()
   int estadob2 = digitalRead(boton2);
   int estadob3 = digitalRead(boton3);
   int estadob4 = digitalRead(boton4);
+
+//------------------------------Botones 1 y 2--------------
+  if(estadob1 == 1){
+    pos = pos + aumento;
+    if(pos>180){
+      pos = 180;
+    }
+    myservo.write(pos);
+    delay(100);
+  }
+  if(estadob2 == 1){
+    pos = pos - aumento;
+    if(pos < 0){
+      pos = 0;
+    }
+    myservo.write(pos);
+    delay(100);
+  }
+
+
+  //-----------------------------------------------------Botones 3 y 4
 
   if (estadob3 == 1)
   {
@@ -175,4 +206,5 @@ void configurarPWM(void)
   ledcAttachPin(pinLedR, ledRChannel);
   ledcAttachPin(pinLedG, ledGChannel);
   ledcAttachPin(pinLedB, ledBChannel);
+  ledcAttachPin(pinServo,pwmChannel);
 }
