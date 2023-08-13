@@ -1,7 +1,8 @@
 
 //****************************************************************
 // UVG BE3015-Digital 2
-// Código de ejemplo PWM
+// Laboratorio 4 
+// Ingebor Ayleen Rubio Vasquez - 19003
 //****************************************************************
 //****************************************************************
 // Librerías
@@ -17,22 +18,23 @@
 #define ledRChannel 1
 #define ledGChannel 2
 #define ledBChannel 3
+#define pwmChannelServo 4
 #define freqPWM 5000  // Frecuencia en Hz
 #define freqPWM1 1000 // Frecuencia en Hz
 #define freqPWM2 500  // Frecuencia en Hz
+#define freqPWMServo 50
 #define resolution 8  // 1-16 bits de resolución
-#define pinLedR 13
-#define pinLedG 12
-#define pinLedB 14
+#define pinLedR 12
+#define pinLedG 14
+#define pinLedB 27
 #define pinPWM 15 // GPIO 2 para tener la salida del PWM
 
 #define boton1 4
-#define boton2 5
-#define boton3 18
-#define boton4 19
+#define boton2 18
+#define boton3 19
+#define boton4 21
 
 #define pinServo 13
-
 
 //****************************************************************
 // Prototipos de funciones
@@ -42,15 +44,15 @@ void configurarPWM(void);
 // Variables Globales
 //****************************************************************
 
-//int dutycycle = 0;
+// int dutycycle = 0;
 int color = 0; // 0 para rojo 1 para verde y 2 para azul
 int dcR = 0;
 int dcG = 0;
 int dcB = 0;
 
 Servo myservo;
-int pos = 0;
 int aumento = 10;
+int pos = 0;
 
 //****************************************************************
 // ISR: Interrupciones
@@ -82,58 +84,49 @@ void loop()
   int estadob3 = digitalRead(boton3);
   int estadob4 = digitalRead(boton4);
 
-//------------------------------Botones 1 y 2--------------
-  if(estadob1 == 1){
-    pos = pos + aumento;
-    if(pos>180){
-      pos = 180;
-    }
-    myservo.write(pos);
-    delay(100);
-  }
-  if(estadob2 == 1){
-    pos = pos - aumento;
-    if(pos < 0){
-      pos = 0;
-    }
-    myservo.write(pos);
-    delay(100);
-  }
-
-
   //-----------------------------------------------------Botones 3 y 4
-
+  // Cambiar qué se desea hacer
   if (estadob3 == 1)
   {
     delay(500);
     color++;
-  
-    if (color == 0){
+
+    if (color == 0)
+    {
       Serial.printf("Trabajar con rojo\n");
     }
-    else if(color == 1){
+    else if (color == 1)
+    {
       Serial.printf("Trabajar con verde\n");
     }
-    else if(color == 2){
+    else if (color == 2)
+    {
       Serial.printf("Trabajar con azul\n");
     }
-    else if (color > 2){
+    else if (color == 3)
+    {
+      Serial.printf("Trabajar con servos\n");
+    }
+    else if (color > 3)
+    {
       color = 0;
-      Serial.printf("%d",color);
+      //Serial.printf("%d", color);
     }
   }
 
   switch (color)
   {
-  case 0:
+  case 0: //Servo a 0° y modificar LED rojo
     ledcWrite(ledGChannel, 0);
     ledcWrite(ledBChannel, 0);
-    //dcB = 0;
+    myservo.write(0);
+    // dcB = 0;
     if (estadob4 == 1)
     {
       delay(500);
-      dcR+=25;
-      if(dcR>256){
+      dcR += 25;
+      if (dcR > 256)
+      {
         dcR = 0;
       }
       ledcWrite(pwmChannel, dcR);
@@ -141,15 +134,17 @@ void loop()
       delay(10);
     }
     break;
-  case 1:
+  case 1: //Servo a 90° y modificar LED verde
+    myservo.write(90);
     ledcWrite(ledRChannel, 0);
     ledcWrite(ledBChannel, 0);
-    //dcR = 0;
+    // dcR = 0;
     if (estadob4 == 1)
     {
       delay(500);
-      dcG+=25;
-      if(dcG>256){
+      dcG += 25;
+      if (dcG > 256)
+      {
         dcG = 0;
       }
       ledcWrite(pwmChannel, dcG);
@@ -157,15 +152,17 @@ void loop()
       delay(10);
     }
     break;
-  case 2:
+  case 2: //Servo a 180° y modificar LED azul
+    myservo.write(180);
     ledcWrite(ledRChannel, 0);
     ledcWrite(ledGChannel, 0);
-    //dcG = 0;
+    // dcG = 0;
     if (estadob4 == 1)
     {
       delay(500);
-      dcB+=25;
-      if(dcB>256){
+      dcB += 25;
+      if (dcB > 256)
+      {
         dcB = 0;
       }
       ledcWrite(pwmChannel, dcB);
@@ -173,23 +170,42 @@ void loop()
       delay(10);
     }
     break;
+  case 3: //Mover servo libremente con botones 1 y 2
+    //myservo.write(0);
+    if (estadob1 == 1 && estadob2 == 0) //Aumentar posicion del servo
+    {
+      //Serial.println(pos);
+      pos = pos + aumento;
+      if (pos > 180)
+      {
+        pos = 180;
+      }
+      else 
+        pos = pos;
+      
+      //Serial.println(pos);
+      Serial.println("sumando");
+      myservo.write(pos);
+      delay(500);
+    }
+    else if (estadob2 == 1 && estadob1 ==0) //Disminuir posicion del servo
+    {
+      pos = pos - aumento;
+      if (pos < 0)
+      {
+        pos = 0;
+      }
+      else
+        pos = pos;
+      
+      //Serial.println(pos);
+      Serial.println("restando");
+      myservo.write(pos);
+      delay(500);
+    }
+    break;
   }
 
-  /**
-    for (int dutycycle = 0; dutycycle < 256; dutycycle++)
-    {
-      ledcWrite(pwmChannel, dutycycle);
-      ledcWrite(ledRChannel, dutycycle);
-      ledcWrite(ledGChannel, dutycycle);
-      delay(10);
-    }
-    for (int dutycycle = 255; dutycycle > 0; dutycycle--)
-    {
-      ledcWrite(ledBChannel, dutycycle);
-      ledcWrite(pwmChannel, dutycycle);
-      delay(10);
-    }
-    **/
 }
 //****************************************************************
 // Función para configurar módulo PWM
@@ -201,10 +217,11 @@ void configurarPWM(void)
   ledcSetup(ledRChannel, freqPWM1, resolution);
   ledcSetup(ledGChannel, freqPWM2, resolution);
   ledcSetup(ledBChannel, freqPWM, resolution);
+  ledcSetup(pwmChannelServo, freqPWMServo, resolution);
   // Paso 2: seleccionar en que GPIO tendremos nuestra señal PWM
   ledcAttachPin(pinPWM, pwmChannel);
   ledcAttachPin(pinLedR, ledRChannel);
   ledcAttachPin(pinLedG, ledGChannel);
   ledcAttachPin(pinLedB, ledBChannel);
-  ledcAttachPin(pinServo,pwmChannel);
+  ledcAttachPin(pinServo, pwmChannelServo);
 }
